@@ -107,7 +107,9 @@ def start(ctx,logger=None):
             click.echo(f"TODO: {r}")
             if r["cronline"] is not None:
                 c = croniter(r["cronline"])
-                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
+#                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
+                #FIXME: compensate for dolg
+                d = c.get_next(datetime)
                 _schedule(kwargs["database_file"],action=action, due_date=d,cronline_id=r["cronline_id"])
 
         conn = sqlite3.connect(kwargs["database_file"])
