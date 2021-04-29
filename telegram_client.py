@@ -60,6 +60,7 @@ class _NewTimer:
             for tc, flag in zip(time_chunks, "minute hour day month year".split(" ")):
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
+        dt.replace(second=0,microsecond=0)
 
         cmd = f"curl -X POST -H 'Content-Type: application/json' -d '{{\"chat_id\": \"{chat_id}\", \"text\": \"{msg}\"}}' https://api.telegram.org/bot{self._telegram_token}/sendMessage"
         schedule(due_date=dt, action={
