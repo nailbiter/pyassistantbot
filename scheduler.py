@@ -44,9 +44,12 @@ def _add_logger(f):
 @click.group()
 @click.option("-d", "--database-file", type=click.Path(), default="scheduler.db")
 @click.option("-i", "--interval-min", type=int, default=1)
+@click.option("--debug/--no-debug",default=False)
 @click.pass_context
-def scheduler(ctx, **kwargs):
+def scheduler(ctx, debug,**kwargs):
     assert 60 > kwargs["interval_min"] > 0
+    if debug:
+        logging.basicConfig(level=logging.INFO)
     ctx.ensure_object(dict)
     ctx.obj["kwargs"] = {**kwargs}
 
@@ -77,8 +80,10 @@ def _create_tables(database_file):
 
 @scheduler.command()
 @click.pass_context
-def start(ctx,):
+@_add_logger
+def start(ctx,logger=None):
     kwargs = ctx.obj["kwargs"]
+    interval_min = kwargs["interval_min"]
     _create_tables(kwargs["database_file"])
     while True:
         conn = sqlite3.connect(kwargs["database_file"])
@@ -96,14 +101,14 @@ def start(ctx,):
 
         for r in df.to_dict(orient="records"):
             action = json.loads(r["action"])
+            logger.info(f"action: {action}")
             if action["tag"] == "shell":
                 os.system(action["value"])
             click.echo(f"TODO: {r}")
             if r["cronline"] is not None:
-                raise NotImplementedError()
-                c = croniter(r["cron_line"])
+                c = croniter(r["cronline"])
                 d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
-                _schedule(kwargs["database_file"],action=r["action"], due_date=d,cronline_id=r["cronline_id"])
+                _schedule(kwargs["database_file"],action=action, due_date=d,cronline_id=r["cronline_id"])
 
         conn = sqlite3.connect(kwargs["database_file"])
         pd.DataFrame({"task_id": df["task_id"], "is_done": True}).to_sql(
@@ -115,8 +120,10 @@ def start(ctx,):
             time.sleep(seconds_to_sleep)
 
 
-def _schedule(database_file, due_date, action, cron_line=None, cronline_id=None):
-    kwargs = {"due_date": due_date, "action": action}
+@_add_logger
+def _schedule(database_file, due_date, action, cron_line=None, cronline_id=None, logger=None):
+    kwargs = {"due_date": due_date, "action": json.dumps(action)}
+    logger.info(f"kwargs: {kwargs}")
     kwargs["due_date"] = kwargs["due_date"].strftime("%Y%m%d%H%M")
     if cronline_id is None:
         cronline_id = str(uuid.uuid4())
@@ -125,6 +132,7 @@ def _schedule(database_file, due_date, action, cron_line=None, cronline_id=None)
 
     conn = sqlite3.connect(database_file)
 
+#    click.echo(kwargs)
     pd.DataFrame([{"task_id": str(uuid.uuid4()), **kwargs}]
                  ).to_sql('tasks', conn, if_exists='append', index=None)
     if cron_line is not None:
@@ -160,7 +168,7 @@ def schedule(ctx, due_date, value, tag, auto_fix, cron_line, logger=None):
                      d).seconds % (60*interval_min)
         assert remainder == 0, (cron_line, remainder)
 
-    _schedule(kwargs["database_file"], due_date=due_date,
+    _schedule(kwargs_["database_file"], due_date=due_date,
               action={"tag": tag, "value": value}, cron_line=cron_line)
 
 
