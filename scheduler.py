@@ -84,7 +84,7 @@ def _create_tables(database_file):
     conn.close()
 
 
-def start_scheduler(logger,interval_min=_DEFAULTS["interval_min"], database_file=_DEFAULTS["database_file"]):
+def start_scheduler(logger, interval_min=_DEFAULTS["interval_min"], database_file=_DEFAULTS["database_file"]):
     logger.info("start")
     _create_tables(database_file)
     while True:
@@ -106,6 +106,10 @@ def start_scheduler(logger,interval_min=_DEFAULTS["interval_min"], database_file
             logger.info(f"action: {action}")
             if action["tag"] == "shell":
                 os.system(action["value"])
+            elif action["tag"] == "osascript":
+                os.system(
+                    f"osascript -e 'display notification \"{action['value']}\"'")
+
             click.echo(f"TODO: {r}")
             if r["cronline"] is not None:
                 c = croniter(r["cronline"])
@@ -113,7 +117,7 @@ def start_scheduler(logger,interval_min=_DEFAULTS["interval_min"], database_file
 #                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
                 d = c.get_next(datetime, start_time=now_)
                 schedule(database_file=database_file, action=action,
-                          due_date=d, cronline_id=r["cronline_id"])
+                         due_date=d, cronline_id=r["cronline_id"])
 
         conn = sqlite3.connect(database_file)
         pd.DataFrame({"task_id": df["task_id"], "is_done": True}).to_sql(
@@ -129,7 +133,8 @@ def start_scheduler(logger,interval_min=_DEFAULTS["interval_min"], database_file
 @click.pass_context
 def start(ctx):
     kwargs = ctx.obj["kwargs"]
-    start_scheduler(logger=logging.getLogger(start_scheduler.__name__),**kwargs)
+    start_scheduler(logger=logging.getLogger(
+        start_scheduler.__name__), **kwargs)
 
 
 def schedule(due_date, action, cron_line=None, cronline_id=None, database_file=_DEFAULTS["database_file"]):
@@ -155,16 +160,17 @@ def schedule(due_date, action, cron_line=None, cronline_id=None, database_file=_
 
 @scheduler.command(name="schedule")
 @click.pass_context
-@click.option("-t", "--tag", type=click.Choice(["shell"]), default="shell")
+@click.option("-t", "--tag", type=click.Choice(["shell", "osascript"]), default="shell")
 @click.option("-v", "--value", required=True)
 @click.option("-d", "--due-date", type=click.DateTime())
-@click.option("-m","--minutes-delay",type=int)
+@click.option("-m", "--minutes-delay", type=int)
 @click.option("-c", "--cron-line")
 @click.option("--auto-fix/--no-auto-fix", default=False)
 def schedule_click(ctx, value, tag, auto_fix, cron_line, **kwargs):
-    logger=logging.getLogger("schedule_click")
+    logger = logging.getLogger("schedule_click")
 
-    assert sum([(1 if (kwargs[k] is not None) else 0) for k in "minutes_delay,due_date".split(",")])==1, f"exactly one of minutes_delay,due_date should be given"
+    assert sum([(1 if (kwargs[k] is not None) else 0) for k in "minutes_delay,due_date".split(
+        ",")]) == 1, f"exactly one of minutes_delay,due_date should be given"
     if kwargs["due_date"] is not None:
         due_date = kwargs["due_date"]
     elif kwargs["minutes_delay"] is not None:
@@ -189,7 +195,7 @@ def schedule_click(ctx, value, tag, auto_fix, cron_line, **kwargs):
         assert remainder == 0, (cron_line, remainder)
 
     schedule(database_file=kwargs_["database_file"], due_date=due_date,
-              action={"tag": tag, "value": value}, cron_line=cron_line)
+             action={"tag": tag, "value": value}, cron_line=cron_line)
 
 
 if __name__ == "__main__":
