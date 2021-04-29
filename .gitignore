@@ -132,3 +132,4 @@ dmypy.json
 *.swo
 *.swp
 scheduler.db
+.envrc
