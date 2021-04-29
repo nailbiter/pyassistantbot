@@ -78,11 +78,8 @@ def _create_tables(database_file):
     conn.close()
 
 
-@scheduler.command()
-@click.pass_context
 @_add_logger
-def start(ctx,logger=None):
-    kwargs = ctx.obj["kwargs"]
+def start_scheduler(logger=None,**kwargs):
     interval_min = kwargs["interval_min"]
     _create_tables(kwargs["database_file"])
     while True:
@@ -107,9 +104,9 @@ def start(ctx,logger=None):
             click.echo(f"TODO: {r}")
             if r["cronline"] is not None:
                 c = croniter(r["cronline"])
-#                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
                 #FIXME: compensate for dolg
-                d = c.get_next(datetime)
+#                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
+                d = c.get_next(datetime,start_time=now_)
                 _schedule(kwargs["database_file"],action=action, due_date=d,cronline_id=r["cronline_id"])
 
         conn = sqlite3.connect(kwargs["database_file"])
@@ -120,6 +117,11 @@ def start(ctx,logger=None):
         seconds_to_sleep = interval_min*60 - (datetime.now()-now_).seconds
         if seconds_to_sleep > 0:
             time.sleep(seconds_to_sleep)
+@scheduler.command()
+@click.pass_context
+def start(ctx):
+    kwargs = ctx.obj["kwargs"]
+    start_scheduler(**kwargs)
 
 
 @_add_logger
