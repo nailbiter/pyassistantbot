@@ -23,7 +23,7 @@ import click
 import sqlite3
 import time
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 import json
 import os
@@ -41,12 +41,18 @@ def _add_logger(f):
     return _f
 
 
+_DEFAULTS = {
+    "database_file": "scheduler.db",
+    "interval_min": 1
+}
+
+
 @click.group()
-@click.option("-d", "--database-file", type=click.Path(), default="scheduler.db")
-@click.option("-i", "--interval-min", type=int, default=1)
-@click.option("--debug/--no-debug",default=False)
+@click.option("-d", "--database-file", type=click.Path(), default=_DEFAULTS["database_file"])
+@click.option("-i", "--interval-min", type=int, default=_DEFAULTS["interval_min"])
+@click.option("--debug/--no-debug", default=False)
 @click.pass_context
-def scheduler(ctx, debug,**kwargs):
+def scheduler(ctx, debug, **kwargs):
     assert 60 > kwargs["interval_min"] > 0
     if debug:
         logging.basicConfig(level=logging.INFO)
@@ -78,12 +84,11 @@ def _create_tables(database_file):
     conn.close()
 
 
-@_add_logger
-def start_scheduler(logger=None,**kwargs):
-    interval_min = kwargs["interval_min"]
-    _create_tables(kwargs["database_file"])
+def start_scheduler(logger,interval_min=_DEFAULTS["interval_min"], database_file=_DEFAULTS["database_file"]):
+    logger.info("start")
+    _create_tables(database_file)
     while True:
-        conn = sqlite3.connect(kwargs["database_file"])
+        conn = sqlite3.connect(database_file)
         now_ = datetime.now()
         click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
         df = pd.read_sql_query(
@@ -104,12 +109,13 @@ def start_scheduler(logger=None,**kwargs):
             click.echo(f"TODO: {r}")
             if r["cronline"] is not None:
                 c = croniter(r["cronline"])
-                #FIXME: compensate for dolg
+                # FIXME: compensate for dolg
 #                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
-                d = c.get_next(datetime,start_time=now_)
-                _schedule(kwargs["database_file"],action=action, due_date=d,cronline_id=r["cronline_id"])
+                d = c.get_next(datetime, start_time=now_)
+                schedule(database_file=database_file, action=action,
+                          due_date=d, cronline_id=r["cronline_id"])
 
-        conn = sqlite3.connect(kwargs["database_file"])
+        conn = sqlite3.connect(database_file)
         pd.DataFrame({"task_id": df["task_id"], "is_done": True}).to_sql(
             'tasks_done', conn, if_exists='append', index=None)
         conn.close()
@@ -117,15 +123,17 @@ def start_scheduler(logger=None,**kwargs):
         seconds_to_sleep = interval_min*60 - (datetime.now()-now_).seconds
         if seconds_to_sleep > 0:
             time.sleep(seconds_to_sleep)
+
+
 @scheduler.command()
 @click.pass_context
 def start(ctx):
     kwargs = ctx.obj["kwargs"]
-    start_scheduler(**kwargs)
+    start_scheduler(logger=logging.getLogger(start_scheduler.__name__),**kwargs)
 
 
-@_add_logger
-def _schedule(database_file, due_date, action, cron_line=None, cronline_id=None, logger=None):
+def schedule(due_date, action, cron_line=None, cronline_id=None, database_file=_DEFAULTS["database_file"]):
+    logger = logging.getLogger("schedule")
     kwargs = {"due_date": due_date, "action": json.dumps(action)}
     logger.info(f"kwargs: {kwargs}")
     kwargs["due_date"] = kwargs["due_date"].strftime("%Y%m%d%H%M")
@@ -140,20 +148,28 @@ def _schedule(database_file, due_date, action, cron_line=None, cronline_id=None,
     pd.DataFrame([{"task_id": str(uuid.uuid4()), **kwargs}]
                  ).to_sql('tasks', conn, if_exists='append', index=None)
     if cron_line is not None:
-        pd.DataFrame([{"cronline":cron_line, "cronline_id":kwargs["cronline_id"]}]
+        pd.DataFrame([{"cronline": cron_line, "cronline_id": kwargs["cronline_id"]}]
                      ).to_sql('tasks_cronlines', conn, if_exists='append', index=None)
     conn.close()
 
 
-@scheduler.command()
+@scheduler.command(name="schedule")
 @click.pass_context
 @click.option("-t", "--tag", type=click.Choice(["shell"]), default="shell")
 @click.option("-v", "--value", required=True)
-@click.option("-d", "--due-date", type=click.DateTime(), required=True)
+@click.option("-d", "--due-date", type=click.DateTime())
+@click.option("-m","--minutes-delay",type=int)
 @click.option("-c", "--cron-line")
 @click.option("--auto-fix/--no-auto-fix", default=False)
-@_add_logger
-def schedule(ctx, due_date, value, tag, auto_fix, cron_line, logger=None):
+def schedule_click(ctx, value, tag, auto_fix, cron_line, **kwargs):
+    logger=logging.getLogger("schedule_click")
+
+    assert sum([(1 if (kwargs[k] is not None) else 0) for k in "minutes_delay,due_date".split(",")])==1, f"exactly one of minutes_delay,due_date should be given"
+    if kwargs["due_date"] is not None:
+        due_date = kwargs["due_date"]
+    elif kwargs["minutes_delay"] is not None:
+        due_date = datetime.now() + timedelta(minutes=kwargs["minutes_delay"])
+
     kwargs_ = ctx.obj["kwargs"]
     interval_min = kwargs_["interval_min"]
     aligned_date = due_date.replace(minute=math.ceil(
@@ -172,7 +188,7 @@ def schedule(ctx, due_date, value, tag, auto_fix, cron_line, logger=None):
                      d).seconds % (60*interval_min)
         assert remainder == 0, (cron_line, remainder)
 
-    _schedule(kwargs_["database_file"], due_date=due_date,
+    schedule(database_file=kwargs_["database_file"], due_date=due_date,
               action={"tag": tag, "value": value}, cron_line=cron_line)
 
 
