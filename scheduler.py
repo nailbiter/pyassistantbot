@@ -99,6 +99,11 @@ def start(ctx,):
             if action["tag"] == "shell":
                 os.system(action["value"])
             click.echo(f"TODO: {r}")
+            if r["cronline"] is not None:
+                raise NotImplementedError()
+                c = croniter(r["cron_line"])
+                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
+                _schedule(kwargs["database_file"],action=r["action"], due_date=d,cronline_id=r["cronline_id"])
 
         conn = sqlite3.connect(kwargs["database_file"])
         pd.DataFrame({"task_id": df["task_id"], "is_done": True}).to_sql(
@@ -110,12 +115,21 @@ def start(ctx,):
             time.sleep(seconds_to_sleep)
 
 
-def _schedule(database_file, due_date, action, cron_line=None):
+def _schedule(database_file, due_date, action, cron_line=None, cronline_id=None):
     kwargs = {"due_date": due_date, "action": action}
     kwargs["due_date"] = kwargs["due_date"].strftime("%Y%m%d%H%M")
+    if cronline_id is None:
+        cronline_id = str(uuid.uuid4())
+    if cron_line is not None or cronline_id is not None:
+        kwargs["cronline_id"] = cronline_id
+
     conn = sqlite3.connect(database_file)
+
     pd.DataFrame([{"task_id": str(uuid.uuid4()), **kwargs}]
                  ).to_sql('tasks', conn, if_exists='append', index=None)
+    if cron_line is not None:
+        pd.DataFrame([{"cronline":cron_line, "cronline_id":kwargs["cronline_id"]}]
+                     ).to_sql('tasks_cronlines', conn, if_exists='append', index=None)
     conn.close()
 
 
