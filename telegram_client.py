@@ -69,6 +69,16 @@ class _NewTimer:
             chat_id=chat_id, text=f"schedule \"{msg}\" to be sent at {dt.isoformat()}")
 
 
+class _Start:
+    def __init__(self,):
+        self._logger = logging.getLogger(self.__class__.__name__)
+
+    def __call__(self, update, context):
+        logger = self._logger
+        chat_id = update.effective_chat.id
+        logger.info(f"{datetime.now().isoformat()}: chat_id: {chat_id}")
+
+
 def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
     updater = Updater(token, use_context=True)
     if updater.bot is None:
@@ -77,6 +87,7 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
 
     updater.dispatcher.add_handler(CommandHandler(
         'new_timer', _NewTimer(telegram_token=token)))
-#
-#    # Start the Bot
+    updater.dispatcher.add_handler(CommandHandler(
+        'start', _Start()))
+
     updater.start_polling()
