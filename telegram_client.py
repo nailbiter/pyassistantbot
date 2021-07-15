@@ -58,7 +58,7 @@ class _NewTimer:
         #        assert media in ["slack", "telegram"], media
         #        assert media in ["telegram", ], media
         if media == "telegram":
-            media = f"{media}:{update.effective_chat.id}"
+            #            media = f"{media}:{update.effective_chat.id}"
             cmd = f"curl -X POST -H 'Content-Type: application/json' -d '{{\"chat_id\": \"{chat_id}\", \"text\": \"{msg}\"}}' https://api.telegram.org/bot{self._telegram_token}/sendMessage"
         elif media.startswith("slack:"):
             webhook_name = media[len("slack:"):].upper()
