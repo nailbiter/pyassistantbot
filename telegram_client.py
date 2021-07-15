@@ -52,9 +52,10 @@ class _NewTimer:
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
         dt = dt.replace(second=0, microsecond=0)
+
     def _call(self, time, media, msg, chat_id):
         #        assert media in ["slack", "telegram"], media
-#        assert media in ["telegram", ], media
+        #        assert media in ["telegram", ], media
         if media == "telegram":
             media = f"{media}:{update.effective_chat.id}"
             cmd = f"curl -X POST -H 'Content-Type: application/json' -d '{{\"chat_id\": \"{chat_id}\", \"text\": \"{msg}\"}}' https://api.telegram.org/bot{self._telegram_token}/sendMessage"
@@ -65,7 +66,8 @@ class _NewTimer:
                 return f"unknown hook {webhook_name}"
             else:
                 webhook = os.environ[]
-            self._logger.info(f"slack webhook: \"{webhook_name}\" => \"{webhook}\"")
+            self._logger.info(
+                f"slack webhook: \"{webhook_name}\" => \"{webhook}\"")
             cmd = f"curl -X POST -H 'Content-Type: application/json' --data '{{\"text\": \"{msg}\"}}' {webhook}"
         else:
             return f"unknown media {media}"
