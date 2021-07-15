@@ -41,16 +41,7 @@ class _NewTimer:
         self._telegram_token = telegram_token
         self._logger = logging.getLogger(self.__class__.__name__)
 
-    def __call__(self, update, context):
-        logger = self._logger
-        _, time, media, msg = update.message.text.split(" ", maxsplit=3)
-        media = media[1:]
-        chat_id = update.effective_chat.id
-        logger.info(f"chat_id: {chat_id}")
-#        assert media in ["slack", "telegram"], media
-        assert media in ["telegram", ], media
-        if media == "telegram":
-            media = f"{media}:{update.effective_chat.id}"
+    def _parse_dt(time):
         dt = datetime.now()
         if time.startswith("+"):
             dt += timedelta(minutes=int(time[1:]))
@@ -61,12 +52,37 @@ class _NewTimer:
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
         dt = dt.replace(second=0, microsecond=0)
+    def _call(self, time, media, msg, chat_id):
+        #        assert media in ["slack", "telegram"], media
+#        assert media in ["telegram", ], media
+        if media == "telegram":
+            media = f"{media}:{update.effective_chat.id}"
+            cmd = f"curl -X POST -H 'Content-Type: application/json' -d '{{\"chat_id\": \"{chat_id}\", \"text\": \"{msg}\"}}' https://api.telegram.org/bot{self._telegram_token}/sendMessage"
+        elif media.startswith("slack:"):
+            webhook_name = media[len("slack:"):].upper()
+            k = f"SLACK_WEBHOOK_{webhook_name}"
+            if k not in os.environ:
+                return f"unknown hook {webhook_name}"
+            else:
+                webhook = os.environ[]
+            self._logger.info(f"slack webhook: \"{webhook_name}\" => \"{webhook}\"")
+            cmd = f"curl -X POST -H 'Content-Type: application/json' --data '{{\"text\": \"{msg}\"}}' {webhook}"
+        else:
+            return f"unknown media {media}"
 
-        cmd = f"curl -X POST -H 'Content-Type: application/json' -d '{{\"chat_id\": \"{chat_id}\", \"text\": \"{msg}\"}}' https://api.telegram.org/bot{self._telegram_token}/sendMessage"
-        schedule(due_date=dt, action={
+        schedule(due_date=self._parse_dt(time), action={
                  "tag": "shell", "value": cmd})
+        return f"schedule \"{msg}\" to be sent at {dt.isoformat()}"
+
+    def __call__(self, update, context):
+        logger = self._logger
+        _, time, media, msg = update.message.text.split(" ", maxsplit=3)
+        media = media[1:]
+        chat_id = update.effective_chat.id
+        self._logger.info(f"chat_id: {chat_id}")
+
         context.bot.send_message(
-            chat_id=chat_id, text=f"schedule \"{msg}\" to be sent at {dt.isoformat()}")
+            chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
 class _Start:
