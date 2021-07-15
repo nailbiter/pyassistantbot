@@ -41,7 +41,7 @@ class _NewTimer:
         self._telegram_token = telegram_token
         self._logger = logging.getLogger(self.__class__.__name__)
 
-    def _parse_dt(time):
+    def _parse_dt(self, time):
         dt = datetime.now()
         if time.startswith("+"):
             dt += timedelta(minutes=int(time[1:]))
