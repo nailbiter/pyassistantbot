@@ -52,6 +52,7 @@ class _NewTimer:
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
         dt = dt.replace(second=0, microsecond=0)
+        return dt
 
     def _call(self, time, media, msg, chat_id):
         #        assert media in ["slack", "telegram"], media
