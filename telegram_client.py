@@ -65,7 +65,7 @@ class _NewTimer:
             if k not in os.environ:
                 return f"unknown hook {webhook_name}"
             else:
-                webhook = os.environ[]
+                webhook = os.environ[k]
             self._logger.info(
                 f"slack webhook: \"{webhook_name}\" => \"{webhook}\"")
             cmd = f"curl -X POST -H 'Content-Type: application/json' --data '{{\"text\": \"{msg}\"}}' {webhook}"
