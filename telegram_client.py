@@ -73,7 +73,8 @@ class _NewTimer:
         else:
             return f"unknown media {media}"
 
-        schedule(due_date=self._parse_dt(time), action={
+        dt = self._parse_dt(time)
+        schedule(due_date=dt, action={
                  "tag": "shell", "value": cmd})
         return f"schedule \"{msg}\" to be sent at {dt.isoformat()}"
 
