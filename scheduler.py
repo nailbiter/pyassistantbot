@@ -89,10 +89,10 @@ def _get_current_tasks(database_file=_DEFAULTS["database_file"], now_=None):
     sql = f"""
         SELECT * 
         FROM tasks left join tasks_done using (task_id) left join tasks_cronlines using (cronline_id) 
-        WHERE is_done is null"
+        WHERE is_done is null
         """
     if now_ is not None:
-        sql += f""" and due_date<="{now_.strftime('%Y%m%d%H%M')} """
+        sql += f""" and due_date<="{now_.strftime('%Y%m%d%H%M')}" """
     df = pd.read_sql_query(sql, conn)
     conn.close()
     return df
