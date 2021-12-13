@@ -96,6 +96,7 @@ class _Start:
     def __call__(self, update, context):
         logger = self._logger
         chat_id = update.effective_chat.id
+        #FIXME: save to db and add username 
         logger.info(f"{datetime.now().isoformat()}: chat_id: {chat_id}")
 
 
