@@ -99,6 +99,9 @@ def _get_current_tasks(database_file=_DEFAULTS["database_file"], now_=None, pret
     if pretty:
         df.due_date = df.due_date.apply(
             lambda s: datetime.strptime(s, "%Y%m%d%H%M"))
+        actions_df = pd.DataFrame(list(df.pop("action").apply(json.loads)))
+        for c in actions_df:
+            df = pd.DataFrame({**df, **actions_df})
 
     return df
 
