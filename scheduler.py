@@ -84,7 +84,7 @@ def _create_tables(database_file):
     conn.close()
 
 
-def _get_current_tasks(database_file=_DEFAULTS["database_file"], now_=None):
+def _get_current_tasks(database_file=_DEFAULTS["database_file"], now_=None, pretty=True):
     conn = sqlite3.connect(database_file)
     sql = f"""
         SELECT * 
@@ -95,6 +95,11 @@ def _get_current_tasks(database_file=_DEFAULTS["database_file"], now_=None):
         sql += f""" and due_date<="{now_.strftime('%Y%m%d%H%M')}" """
     df = pd.read_sql_query(sql, conn)
     conn.close()
+
+    if pretty:
+        df.due_date = df.due_date.apply(
+            lambda s: datetime.strptime(s, "%Y%m%d%H%M"))
+
     return df
 
 
@@ -104,7 +109,8 @@ def start_scheduler(logger, interval_min=_DEFAULTS["interval_min"], database_fil
     while True:
         conn = sqlite3.connect(database_file)
         click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
-        df = _get_current_tasks(database_file=database_file, now_=now_)
+        df = _get_current_tasks(
+            database_file=database_file, now_=now_, pretty=False)
 
         for r in df.to_dict(orient="records"):
             action = json.loads(r["action"])
