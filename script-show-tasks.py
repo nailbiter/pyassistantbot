@@ -40,6 +40,7 @@ def script_show_tasks():
     df = df[["value", "due_date"]]
 #    df.due_date = df.due_date.apply(
 #        lambda s: datetime.strptime(s, "%Y-%m-%d %H:%M:%S"))
+    df = df.sort_values(by="due_date")
     click.echo(df)
 
 
