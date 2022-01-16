@@ -125,7 +125,9 @@ def start_scheduler(logger, interval_min=_DEFAULTS["interval_min"], database_fil
     _create_tables(database_file)
     logger.info("after _create_tables")
     while True:
+        logger.info(f"after {database_file}")
         conn = sqlite3.connect(database_file)
+        logger.info("after _create_tables")
         click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
         df = _get_current_tasks(
             database_file=database_file, now_=now_, pretty=False)
