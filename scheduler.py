@@ -127,13 +127,10 @@ def start_scheduler(logger, interval_min=_DEFAULTS["interval_min"], database_fil
     while True:
         try:
             now_ = datetime.now()
-#            logger.info(f"after {database_file}")
             conn = sqlite3.connect(database_file)
             click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
-#            logger.info(f"before")
             df = _get_current_tasks(
                 database_file=database_file, now_=now_, pretty=False)
-#            logger.info(f"after {df}")
 
             for r in df.to_dict(orient="records"):
                 action = json.loads(r["action"])
