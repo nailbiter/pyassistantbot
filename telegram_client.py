@@ -25,6 +25,7 @@ from telegram.ext import MessageHandler, Filters
 import logging
 from scheduler import schedule
 from datetime import datetime, timedelta
+import _commmon
 
 
 def _add_logger(f):
@@ -52,6 +53,7 @@ class _NewTimer:
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
         dt = dt.replace(second=0, microsecond=0)
+        dt += timedelta(hours=_commmon.get_current_offset()-_timezone_shift)
         return dt
 
     def _call(self, time, media, msg, chat_id):
@@ -89,6 +91,9 @@ class _NewTimer:
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
+_timezone_shift = 9
+
+
 class _Start:
     def __init__(self,):
         self._logger = logging.getLogger(self.__class__.__name__)
@@ -96,8 +101,16 @@ class _Start:
     def __call__(self, update, context):
         logger = self._logger
         chat_id = update.effective_chat.id
-        #FIXME: save to db and add username 
+        # FIXME: save to db and add username
         logger.info(f"{datetime.now().isoformat()}: chat_id: {chat_id}")
+
+
+def _set_timezone(update, context):
+    _old_timezone_shift = _timezone_shift
+    _timezone_shift = int(update.message.text.strip())
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {_timezone_shift}")
 
 
 def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
@@ -110,5 +123,7 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
         'new_timer', _NewTimer(telegram_token=token)))
     updater.dispatcher.add_handler(CommandHandler(
         'start', _Start()))
+    updater.dispatcher.add_handler(CommandHandler(
+        'set_timezone', _set_timezone))
 
     updater.start_polling()
