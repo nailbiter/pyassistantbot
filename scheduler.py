@@ -125,36 +125,40 @@ def start_scheduler(logger, interval_min=_DEFAULTS["interval_min"], database_fil
     _create_tables(database_file)
     logger.info("after _create_tables")
     while True:
-        logger.info(f"after {database_file}")
-        conn = sqlite3.connect(database_file)
-        click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
-        logger.info(f"before")
-        df = _get_current_tasks(
-            database_file=database_file, now_=now_, pretty=False)
-        logger.info(f"after {df}")
+        try:
+            logger.info(f"after {database_file}")
+            conn = sqlite3.connect(database_file)
+            click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
+            logger.info(f"before")
+            df = _get_current_tasks(
+                database_file=database_file, now_=now_, pretty=False)
+            logger.info(f"after {df}")
 
-        for r in df.to_dict(orient="records"):
-            action = json.loads(r["action"])
-            logger.info(f"action: {action}")
-            if action["tag"] == "shell":
-                os.system(action["value"])
-            click.echo(f"TODO: {r}")
-            if r["cronline"] is not None:
-                c = croniter(r["cronline"])
-                # FIXME: compensate for dolg
-#                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
-                d = c.get_next(datetime, start_time=now_)
-                schedule(database_file=database_file, action=action,
-                         due_date=d, cronline_id=r["cronline_id"])
+            for r in df.to_dict(orient="records"):
+                action = json.loads(r["action"])
+                logger.info(f"action: {action}")
+                if action["tag"] == "shell":
+                    os.system(action["value"])
+                click.echo(f"TODO: {r}")
+                if r["cronline"] is not None:
+                    c = croniter(r["cronline"])
+                    # FIXME: compensate for dolg
+    #                d = c.get_next(datetime,start_time=datetime.strptime(r["due_date"],"%Y%m%d%H%M"))
+                    d = c.get_next(datetime, start_time=now_)
+                    schedule(database_file=database_file, action=action,
+                             due_date=d, cronline_id=r["cronline_id"])
 
-        conn = sqlite3.connect(database_file)
-        pd.DataFrame({"task_id": df["task_id"], "is_done": True}).to_sql(
-            'tasks_done', conn, if_exists='append', index=None)
-        conn.close()
+            conn = sqlite3.connect(database_file)
+            pd.DataFrame({"task_id": df["task_id"], "is_done": True}).to_sql(
+                'tasks_done', conn, if_exists='append', index=None)
+            conn.close()
 
-        seconds_to_sleep = interval_min*60 - (datetime.now()-now_).seconds
-        if seconds_to_sleep > 0:
-            time.sleep(seconds_to_sleep)
+            seconds_to_sleep = interval_min*60 - (datetime.now()-now_).seconds
+            if seconds_to_sleep > 0:
+                time.sleep(seconds_to_sleep)
+        except Exception as e:
+            logger.error(e)
+            raise
 
 
 @scheduler.command()
