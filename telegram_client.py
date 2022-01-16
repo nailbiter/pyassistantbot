@@ -42,7 +42,7 @@ class _NewTimer:
     def __init__(self, telegram_token, timezone_shift):
         self._telegram_token = telegram_token
         self._logger = logging.getLogger(self.__class__.__name__)
-        self._timezone_shift = _timezone_shift
+        self._timezone_shift = timezone_shift
 
     def _parse_dt(self, time):
         dt = datetime.now()
@@ -106,7 +106,7 @@ class _Start:
 
 
 class _TimezoneShift:
-    def __init__():
+    def __init__(self):
         self._timezone_shift = 9
 
     def get_timezone_shift(self):
@@ -138,6 +138,7 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
     bot = updater.bot
 
     timezone_shift = _TimezoneShift()
+#    logging.warning("here")
     updater.dispatcher.add_handler(CommandHandler(
         'new_timer', _NewTimer(telegram_token=token, timezone_shift=timezone_shift)))
     updater.dispatcher.add_handler(CommandHandler(
@@ -146,3 +147,4 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
         'set_timezone', timezone_shift))
 
     updater.start_polling()
+#    logging.warning("here")
