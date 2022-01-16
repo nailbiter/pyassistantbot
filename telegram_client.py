@@ -139,10 +139,10 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
 
     timezone_shift = _TimezoneShift()
     updater.dispatcher.add_handler(CommandHandler(
-        'set_timezone', timezone_shift))
-    updater.dispatcher.add_handler(CommandHandler(
         'new_timer', _NewTimer(telegram_token=token, timezone_shift=timezone_shift)))
     updater.dispatcher.add_handler(CommandHandler(
         'start', _Start()))
+    updater.dispatcher.add_handler(CommandHandler(
+        'set_timezone', timezone_shift))
 
     updater.start_polling()
