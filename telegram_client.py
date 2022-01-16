@@ -106,8 +106,8 @@ class _Start:
 
 
 def _set_timezone(update, context):
-    _old_timezone_shift = _timezone_shift
     _timezone_shift = int(update.message.text.strip())
+    _old_timezone_shift = _timezone_shift
     chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {_timezone_shift}")
