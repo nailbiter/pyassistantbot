@@ -61,6 +61,7 @@ def scheduler(ctx, debug, **kwargs):
 
 
 def _create_tables(database_file):
+    logger.info(f"before connect to {database_file}")
     conn = sqlite3.connect(database_file)
     c = conn.cursor()
     logger.info("before _create_tables")
