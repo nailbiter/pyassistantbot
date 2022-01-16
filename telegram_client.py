@@ -39,9 +39,10 @@ def _add_logger(f):
 
 
 class _NewTimer:
-    def __init__(self, telegram_token):
+    def __init__(self, telegram_token, timezone_shift):
         self._telegram_token = telegram_token
         self._logger = logging.getLogger(self.__class__.__name__)
+        self._timezone_shift = _timezone_shift
 
     def _parse_dt(self, time):
         dt = datetime.now()
@@ -54,7 +55,8 @@ class _NewTimer:
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
         dt = dt.replace(second=0, microsecond=0)
-        dt += timedelta(hours=_commmon.get_current_offset()-_timezone_shift)
+        dt += timedelta(hours=_commmon.get_current_offset() -
+                        _timezone_shift.get_timezone_shift())
         return dt
 
     def _call(self, time, media, msg, chat_id):
@@ -92,9 +94,6 @@ class _NewTimer:
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
-_timezone_shift = 9
-
-
 class _Start:
     def __init__(self,):
         self._logger = logging.getLogger(self.__class__.__name__)
@@ -106,22 +105,30 @@ class _Start:
         logger.info(f"{datetime.now().isoformat()}: chat_id: {chat_id}")
 
 
-def _set_timezone(update, context):
-    text = update.message.text.strip()
-    split = re.split(r"\s+", text)
-    chat_id = update.effective_chat.id
-    if len(split) == 1:
-        context.bot.send_message(
-            chat_id=chat_id, text=f"current timezone shift \"{_timezone_shift}\"")
-    elif len(split) == 2:
-        _, text = split
-        _timezone_shift = int(text.strip())
-        _old_timezone_shift = _timezone_shift
-        context.bot.send_message(
-            chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {_timezone_shift}")
-    else:
-        context.bot.send_message(
-            chat_id=chat_id, text=f"cannot parse \"{text}\"")
+class _TimezoneShift:
+    def __init__():
+        self._timezone_shift = 9
+
+    def get_timezone_shift(self):
+        return self._timezone_shift
+
+    def __call__(self, update, context):
+        _timezone_shift = self._timezone_shift
+        text = update.message.text.strip()
+        split = re.split(r"\s+", text)
+        chat_id = update.effective_chat.id
+        if len(split) == 1:
+            context.bot.send_message(
+                chat_id=chat_id, text=f"current timezone shift \"{_timezone_shift}\"")
+        elif len(split) == 2:
+            _, text = split
+            self._timezone_shift = int(text.strip())
+            _old_timezone_shift = _timezone_shift
+            context.bot.send_message(
+                chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {self._timezone_shift}")
+        else:
+            context.bot.send_message(
+                chat_id=chat_id, text=f"cannot parse \"{text}\"")
 
 
 def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
@@ -130,11 +137,12 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
         print("bot is None!!")
     bot = updater.bot
 
+    timezone_shift = _TimezoneShift()
     updater.dispatcher.add_handler(CommandHandler(
-        'new_timer', _NewTimer(telegram_token=token)))
+        'set_timezone', timezone_shift))
+    updater.dispatcher.add_handler(CommandHandler(
+        'new_timer', _NewTimer(telegram_token=token, timezone_shift=timezone_shift)))
     updater.dispatcher.add_handler(CommandHandler(
         'start', _Start()))
-    updater.dispatcher.add_handler(CommandHandler(
-        'set_timezone', _set_timezone))
 
     updater.start_polling()
