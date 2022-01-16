@@ -63,6 +63,7 @@ def scheduler(ctx, debug, **kwargs):
 def _create_tables(database_file):
     conn = sqlite3.connect(database_file)
     c = conn.cursor()
+    logger.info("before _create_tables")
     c.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             task_id text PRIMARY KEY,
@@ -71,16 +72,19 @@ def _create_tables(database_file):
             cronline_id text
         );
     """)
+    logger.info("after t1")
     c.execute("""CREATE TABLE IF NOT EXISTS tasks_done (
             task_id text PRIMARY KEY,
             is_done bool NOT NULL
         );
     """)
+    logger.info("after t2")
     c.execute("""CREATE TABLE IF NOT EXISTS tasks_cronlines (
             cronline_id text PRIMARY KEY,
             cronline text NOT NULL
         );
     """)
+    logger.info("after t3")
     conn.close()
 
 
@@ -109,6 +113,7 @@ def _get_current_tasks(database_file=_DEFAULTS["database_file"], now_=None, pret
 def start_scheduler(logger, interval_min=_DEFAULTS["interval_min"], database_file=_DEFAULTS["database_file"]):
     logger.info("start")
     _create_tables(database_file)
+    logger.info("after _create_tables")
     while True:
         conn = sqlite3.connect(database_file)
         click.echo(f"now_: {now_.strftime('%Y%m%d%H%M')}")
