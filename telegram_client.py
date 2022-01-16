@@ -26,6 +26,7 @@ import logging
 from scheduler import schedule
 from datetime import datetime, timedelta
 import _commmon
+import re
 
 
 def _add_logger(f):
@@ -106,11 +107,21 @@ class _Start:
 
 
 def _set_timezone(update, context):
-    _timezone_shift = int(update.message.text.strip())
-    _old_timezone_shift = _timezone_shift
+    text = update.message.text.strip()
+    split = re.split(r"\s+", text)
     chat_id = update.effective_chat.id
-    context.bot.send_message(
-        chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {_timezone_shift}")
+    if len(split) == 1:
+        context.bot.send_message(
+            chat_id=chat_id, text=f"current timezone shift \"{_timezone_shift}\"")
+    elif:
+        _, text = split
+        _timezone_shift = int(text.strip())
+        _old_timezone_shift = _timezone_shift
+        context.bot.send_message(
+            chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {_timezone_shift}")
+    else:
+        context.bot.send_message(
+            chat_id=chat_id, text=f"cannot parse \"{text}\"")
 
 
 def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
