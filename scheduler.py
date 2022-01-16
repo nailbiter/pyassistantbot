@@ -30,6 +30,10 @@ import os
 import math
 from croniter import croniter
 import logging
+import inspect
+import types
+from typing import cast
+import logging
 
 
 def _add_logger(f):
@@ -61,6 +65,11 @@ def scheduler(ctx, debug, **kwargs):
 
 
 def _create_tables(database_file):
+    # taken from https://stackoverflow.com/a/13514318
+    this_function_name = cast(
+        types.FrameType, inspect.currentframe()).f_code.co_name
+    logger = logging.getLogger(__name__).getChild(this_function_name)
+
     logger.info(f"before connect to {database_file}")
     conn = sqlite3.connect(database_file)
     c = conn.cursor()
