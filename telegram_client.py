@@ -56,7 +56,7 @@ class _NewTimer:
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
         dt = dt.replace(second=0, microsecond=0)
         dt += timedelta(hours=_commmon.get_current_offset() -
-                        _timezone_shift.get_timezone_shift())
+                        self._timezone_shift.get_timezone_shift())
         return dt
 
     def _call(self, time, media, msg, chat_id):
