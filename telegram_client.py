@@ -113,7 +113,7 @@ def _set_timezone(update, context):
     if len(split) == 1:
         context.bot.send_message(
             chat_id=chat_id, text=f"current timezone shift \"{_timezone_shift}\"")
-    elif:
+    elif len(split) == 2:
         _, text = split
         _timezone_shift = int(text.strip())
         _old_timezone_shift = _timezone_shift
