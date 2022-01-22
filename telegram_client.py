@@ -27,6 +27,8 @@ from scheduler import schedule
 from datetime import datetime, timedelta
 import _common
 import re
+from dotenv import load_dotenv
+from os import path
 
 
 def _add_logger(f):
@@ -132,7 +134,9 @@ class _TimezoneShift:
                 chat_id=chat_id, text=f"cannot parse \"{text}\"")
 
 
-def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
+def telegram_client(logger, token=None):
+    if token is None:
+        token = os.environ["TELEGRAM_TOKEN"]
     updater = Updater(token, use_context=True)
     if updater.bot is None:
         print("bot is None!!")
@@ -149,3 +153,10 @@ def telegram_client(logger, token=os.environ["TELEGRAM_TOKEN"]):
 
     updater.start_polling()
 #    logging.warning("here")
+
+
+if __name__ == "__main__":
+    if path.isfile(".env"):
+        logging.warning("loading .env")
+        load_dotenv()
+    telegram_client(logger=logging.getLogger("telegram_client"))

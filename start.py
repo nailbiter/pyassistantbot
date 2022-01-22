@@ -24,10 +24,12 @@ from scheduler import start_scheduler
 from concurrent import futures
 import logging
 from telegram_client import telegram_client
+from dotenv import load_dotenv
+from os import path
 
 _WHAT = {
     "scheduler": start_scheduler,
-    "telegram":telegram_client,
+    "telegram": telegram_client,
 }
 
 
@@ -49,4 +51,7 @@ def start(what, debug):
 
 
 if __name__ == "__main__":
+    if path.isfile(".env"):
+        logging.warning("loading .env")
+        load_dotenv()
     start()

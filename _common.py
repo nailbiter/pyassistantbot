@@ -30,7 +30,7 @@ def get_current_offset():
     return offset_hour
 
 
-_CONFIG_FILENAME = ".config.json"
+_CONFIG_FILENAME = "/data/.config.json"
 
 
 def get_config():

@@ -1,0 +1,17 @@
+version: '3.3'
+
+services:
+  telegram:
+    command: python3 telegram_client.py --debug
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:              
+      - ./.data_telegram:/data:rw
+  scheduler:
+    command: python3 scheduler.py --debug
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:              
+      - ./.data_scheduler:/data:rw

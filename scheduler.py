@@ -34,6 +34,8 @@ import inspect
 import types
 from typing import cast
 import logging
+from dotenv import load_dotenv
+from os import path
 
 
 def _add_logger(f):
@@ -46,7 +48,7 @@ def _add_logger(f):
 
 
 _DEFAULTS = {
-    "database_file": "scheduler.db",
+    "database_file": "/data/scheduler.db",
     "interval_min": 1
 }
 
@@ -229,4 +231,7 @@ def schedule_click(ctx, value, tag, auto_fix, cron_line, **kwargs):
 
 
 if __name__ == "__main__":
-    scheduler()
+    if path.isfile(".env"):
+        logging.warning("loading .env")
+        load_dotenv()
+    start_scheduler(logger=logging.getLogger("start_scheduler"))
