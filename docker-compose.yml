@@ -14,4 +14,4 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:              
-      - ./.data_scheduler:/data:rw
+      - ./.data_telegram:/data:rw
