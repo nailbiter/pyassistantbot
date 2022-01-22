@@ -25,7 +25,7 @@ from telegram.ext import MessageHandler, Filters
 import logging
 from scheduler import schedule
 from datetime import datetime, timedelta
-import _commmon
+import _common
 import re
 
 
@@ -54,9 +54,9 @@ class _NewTimer:
             for tc, flag in zip(time_chunks, "minute hour day month year".split(" ")):
                 dt = dt.replace(
                     **{flag: (2000 if flag == "year" else 0)+int(tc)})
-        dt = dt.replace(second=0, microsecond=0)
-        dt += timedelta(hours=_commmon.get_current_offset() -
-                        self._timezone_shift.get_timezone_shift())
+            dt = dt.replace(second=0, microsecond=0)
+            dt += timedelta(hours=_common.get_current_offset() -
+                            self._timezone_shift.get_timezone_shift())
         return dt
 
     def _call(self, time, media, msg, chat_id):
@@ -107,7 +107,7 @@ class _Start:
 
 class _TimezoneShift:
     def __init__(self):
-        self._timezone_shift = 9
+        self._timezone_shift = _common.get_config().get("timezone_shift", 9)
 
     def get_timezone_shift(self):
         return self._timezone_shift
@@ -123,6 +123,7 @@ class _TimezoneShift:
         elif len(split) == 2:
             _, text = split
             self._timezone_shift = int(text.strip())
+            _common.update_config(timezone_shift=self._timezone_shift)
             _old_timezone_shift = _timezone_shift
             context.bot.send_message(
                 chat_id=chat_id, text=f"set _timezone_shift from {_old_timezone_shift} to {self._timezone_shift}")
