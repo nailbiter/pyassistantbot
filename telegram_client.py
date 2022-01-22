@@ -83,7 +83,7 @@ class _NewTimer:
         dt = self._parse_dt(time)
         schedule(due_date=dt, action={
                  "tag": "shell", "value": cmd})
-        return f"schedule \"{msg}\" to be sent at {dt.isoformat()}"
+        return f"schedule \"{msg}\" to be sent at {dt.isoformat()} (in {str(dt-datetime.now())})"
 
     def __call__(self, update, context):
         logger = self._logger
