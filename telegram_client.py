@@ -49,7 +49,9 @@ class _NewTimer:
     def _parse_dt(self, time):
         dt = datetime.now()
         if time.startswith("+"):
-            dt += timedelta(minutes=int(time[1:]))
+            minutes = _common.simple_math_eval(
+                time[1:], number_utils=(int, int))
+            dt += timedelta(minutes=minutes)
         else:
             time_chunks = [time[i:i+2] for i in range(0, len(time), 2)]
             time_chunks = reversed(time_chunks)
