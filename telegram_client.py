@@ -21,7 +21,6 @@ ORGANIZATION:
 import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
-from telegram.ext import MessageHandler, Filters
 import logging
 import scheduler
 from datetime import datetime, timedelta
@@ -101,6 +100,7 @@ class _NewTimer:
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
+@_common.error_reporter
 def _list_timers(update, context):
     df = scheduler._get_current_tasks()
     df["value"] = df["value"].apply(shlex.split).apply(
@@ -163,18 +163,28 @@ def telegram_client(logger, token=None):
     bot = updater.bot
 
     timezone_shift = _TimezoneShift()
-#    logging.warning("here")
     updater.dispatcher.add_handler(CommandHandler(
-        'new_timer', _NewTimer(telegram_token=token, timezone_shift=timezone_shift)))
+        'new_timer', _common.error_reporter(_NewTimer(telegram_token=token, timezone_shift=timezone_shift))))
     updater.dispatcher.add_handler(CommandHandler(
         'list_timers', _list_timers))
     updater.dispatcher.add_handler(CommandHandler(
         'start', _Start()))
     updater.dispatcher.add_handler(CommandHandler(
         'set_timezone', timezone_shift))
+    updater.dispatcher.add_handler(MessageHandler(
+        filters=Filters.all, callback=_generic))
 
     updater.start_polling()
-#    logging.warning("here")
+
+
+def _generic(update, context):
+    chat_id = update.effective_chat.id
+    e = None
+    context.bot.send_message(
+        chat_id=chat_id,
+        text=f"exception: ```\n{e}\n```",
+        parse_mode="Markdown",
+    )
 
 
 if __name__ == "__main__":

@@ -83,3 +83,19 @@ def simple_math_eval(s, number_utils=(float, float)):
         else:
             ans -= term
     return ans
+
+
+def error_reporter(f):
+    def _f(update, context, *args, **kwargs):
+        try:
+            res = f(update, context, *args, **kwargs)
+        except Exception as e:
+            chat_id = update.effective_chat.id
+            context.bot.send_message(
+                chat_id=chat_id,
+                text=f"exception: ```\n{e}\n```",
+                parse_mode="Markdown",
+            )
+            raise
+        return res
+    return _f
