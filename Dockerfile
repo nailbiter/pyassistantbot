@@ -10,7 +10,7 @@ ENV TZ=Asia/Tokyo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY scheduler.py scheduler.py
-COPY script-show-tasks.py script-show-tasks.py
+#COPY script-show-tasks.py script-show-tasks.py
 COPY _common.py _common.py
 COPY telegram_client.py telegram_client.py
 
