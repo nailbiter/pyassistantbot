@@ -23,12 +23,15 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 from telegram.ext import MessageHandler, Filters
 import logging
-from scheduler import schedule
+import scheduler
 from datetime import datetime, timedelta
 import _common
 import re
 from dotenv import load_dotenv
 from os import path
+#import pandas as pd
+import json
+import shlex
 
 
 def _add_logger(f):
@@ -83,8 +86,8 @@ class _NewTimer:
             return f"unknown media {media}"
 
         dt = self._parse_dt(time)
-        schedule(due_date=dt, action={
-                 "tag": "shell", "value": cmd})
+        scheduler.schedule(due_date=dt, action={
+            "tag": "shell", "value": cmd})
         return f"schedule \"{msg}\" to be sent at {dt.isoformat()} (in {str(dt-datetime.now())})"
 
     def __call__(self, update, context):
@@ -96,6 +99,16 @@ class _NewTimer:
 
         context.bot.send_message(
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
+
+
+def _list_timers(_, context):
+    df = scheduler._get_current_tasks()
+    df["value"] = df["value"].apply(shlex.split).apply(
+        lambda l: l[-2]).apply(json.loads).apply(lambda o: o["text"])
+    df = df[["value", "due_date"]]
+    df = df.sort_values(by="due_date")
+    context.bot.send_message(
+        chat_id=chat_id, text=str(df))
 
 
 class _Start:
@@ -148,6 +161,8 @@ def telegram_client(logger, token=None):
 #    logging.warning("here")
     updater.dispatcher.add_handler(CommandHandler(
         'new_timer', _NewTimer(telegram_token=token, timezone_shift=timezone_shift)))
+    updater.dispatcher.add_handler(CommandHandler(
+        'list_timers', _list_timers))
     updater.dispatcher.add_handler(CommandHandler(
         'start', _Start()))
     updater.dispatcher.add_handler(CommandHandler(
