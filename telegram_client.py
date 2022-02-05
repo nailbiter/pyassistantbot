@@ -110,7 +110,10 @@ def _list_timers(update, context):
 
     chat_id = update.effective_chat.id
     context.bot.send_message(
-        chat_id=chat_id, text=str(df))
+        chat_id=chat_id,
+        text=f"```{df.to_string()}```",
+        parse_mode="Markdown",
+    )
 
 
 class _Start:
