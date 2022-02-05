@@ -101,12 +101,14 @@ class _NewTimer:
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
-def _list_timers(_, context):
+def _list_timers(update, context):
     df = scheduler._get_current_tasks()
     df["value"] = df["value"].apply(shlex.split).apply(
         lambda l: l[-2]).apply(json.loads).apply(lambda o: o["text"])
     df = df[["value", "due_date"]]
     df = df.sort_values(by="due_date")
+
+    chat_id = update.effective_chat.id
     context.bot.send_message(
         chat_id=chat_id, text=str(df))
 
