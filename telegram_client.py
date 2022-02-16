@@ -107,6 +107,9 @@ def _list_timers(update, context):
         lambda l: l[-2]).apply(json.loads).apply(lambda o: o["text"])
     df = df[["value", "due_date"]]
     df = df.sort_values(by="due_date")
+    _now = datetime.now()
+    df["remains"] = (df.due_date-_now).apply(str)
+    #logging.error(df.dtypes)
 
     chat_id = update.effective_chat.id
     context.bot.send_message(
