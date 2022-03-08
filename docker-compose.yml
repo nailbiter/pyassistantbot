@@ -4,8 +4,13 @@ services:
     heartbeat:
         build:
             context: heartbeat_system
+            #command: python3 heartbeat.py -b 0.05
         command: python3 heartbeat.py
     scheduler:
         build:
             context: heartbeat_system
         command: flask run --host=0.0.0.0
+        environment:
+            - FLASK_ENV=development
+            - FLASK_APP=scheduler.py
+            - MONGO_URL=${MONGO_URL}

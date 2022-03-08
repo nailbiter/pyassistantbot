@@ -19,10 +19,12 @@ ORGANIZATION:
 ==============================================================================="""
 from flask import Flask, request
 import logging
+import os
+
 app = Flask(__name__)
 
 
 @app.route('/heartbeat', methods=["POST"])
 def hello_world():
-    logging.warning(request.form)
+    logging.warning((request.form,os.environ))
     return 'Hello, World!'

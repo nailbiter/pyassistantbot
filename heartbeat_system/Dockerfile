@@ -9,9 +9,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
-ENV FLASK_ENV=development
-ENV FLASK_APP=scheduler.py
-
 COPY heartbeat.py .
 COPY scheduler.py .
 

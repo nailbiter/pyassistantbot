@@ -30,7 +30,7 @@ from datetime import datetime
 
 
 @click.command()
-@click.option("--beat-duration-min", type=int, default=1)
+@click.option("-b", "--beat-duration-min", type=float, default=1)
 @click.option("--remote-hostname", default="scheduler")
 @click.option("--remote-port", type=int, default=5000)
 @click.option("--remote-path", default="heartbeat")
