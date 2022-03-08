@@ -1,0 +1,11 @@
+version: '3.3'
+
+services:
+    heartbeat:
+        build:
+            context: heartbeat_system
+        command: python3 heartbeat.py
+    scheduler:
+        build:
+            context: heartbeat_system
+        command: flask run --host=0.0.0.0
