@@ -100,6 +100,15 @@ class _NewTimer:
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
+def _StringContractor:
+    def __init__(self, maxlen, contraction_symbol="..."):
+        self._maxlen = maxlen
+        self._contraction_symbol = contraction_symbol
+
+    def __call__(self, s):
+        return s if len(s) <= self._maxlen else f"{s[:self._maxlen]}{self._contraction_symbol}"
+
+
 @_common.error_reporter
 def _list_timers(update, context):
     df = scheduler._get_current_tasks()
@@ -109,7 +118,8 @@ def _list_timers(update, context):
     df = df.sort_values(by="due_date")
     _now = datetime.now()
     df["remains"] = (df.due_date-_now).apply(str)
-    #logging.error(df.dtypes)
+    df["value"] = df["value"].apply(_StringContractor(30))
+    # logging.error(df.dtypes)
 
     chat_id = update.effective_chat.id
     context.bot.send_message(
