@@ -118,7 +118,7 @@ def _list_timers(update, context):
     df = df.sort_values(by="due_date")
     _now = datetime.now()
     df["remains"] = (df.due_date-_now).apply(str)
-    df["value"] = df["value"].apply(_StringContractor(30))
+    df["value"] = df["value"].apply(_StringContractor(40))
     # logging.error(df.dtypes)
 
     chat_id = update.effective_chat.id
