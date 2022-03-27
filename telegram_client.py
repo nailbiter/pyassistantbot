@@ -100,7 +100,7 @@ class _NewTimer:
             chat_id=chat_id, text=self._call(time, media, msg, chat_id))
 
 
-def _StringContractor:
+class _StringContractor:
     def __init__(self, maxlen, contraction_symbol="..."):
         self._maxlen = maxlen
         self._contraction_symbol = contraction_symbol
