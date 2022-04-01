@@ -1,3 +1,4 @@
 click
 flask
 requests
+pymongo[srv]

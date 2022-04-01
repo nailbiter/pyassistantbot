@@ -26,5 +26,17 @@ app = Flask(__name__)
 
 @app.route('/heartbeat', methods=["POST"])
 def hello_world():
-    logging.warning((request.form,os.environ))
-    return 'Hello, World!'
+    logging.warning((request.form, os.environ["MONGO_URL"]))
+    return ""
+
+
+@app.route('/register_single_call', methods=["POST"])
+def register_single_call():
+    # TODO
+    return ""
+
+
+@app.route('/register_regular_call', methods=["POST"])
+def register_regular_call():
+    # TODO
+    return ""

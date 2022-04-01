@@ -37,6 +37,9 @@ from datetime import datetime
 def heartbeat(beat_duration_min, remote_hostname, remote_port, remote_path):
     while True:
         now = datetime.now()
+        now = datetime.fromtimestamp(
+            now.timestamp()//(60*beat_duration_min)*(60*beat_duration_min))
+        # TODO: re-sample the datetime object
         url = f"http://{remote_hostname}:{remote_port}/{remote_path}"
         #logging.warning(f"heartbeat {now.isoformat()}, url: \"{url}\"")
         try:
