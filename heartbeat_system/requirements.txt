@@ -2,3 +2,4 @@ click
 flask
 requests
 pymongo[srv]
+pandas

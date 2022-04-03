@@ -131,3 +131,7 @@ dmypy.json
 #vim
 *.swo
 *.swp
+
+# FIXME leftovers from other branches
+.data_telegram/
+.envrc
