@@ -91,8 +91,9 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", help_command))
 
-    dispatcher.add_handler(CommandHandler(
-        "new_timer", functools.partial(process_command, command="new_timer")))
+    for k in ["new_timer", "new_habit"]:
+        dispatcher.add_handler(CommandHandler(
+            k, functools.partial(process_command, command=k)))
 
     # on non command i.e message - echo the message on Telegram
 #    dispatcher.add_handler(MessageHandler(

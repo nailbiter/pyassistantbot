@@ -26,12 +26,15 @@ import uuid
 import json
 import pandas as pd
 import requests
+from croniter import croniter
 
 app = Flask(__name__)
 
 
-def _get_mongo_client():
-    return pymongo.MongoClient(os.environ["MONGO_URL"])
+def _get_mongo_client(coll_name="timers"):
+    client = pymongo.MongoClient(os.environ["MONGO_URL"])
+    coll = client["timers"][coll_name]
+    return client, coll
 
 
 @app.route('/heartbeat', methods=["POST"])
@@ -39,8 +42,8 @@ def heartbeat():
     logging.warning((request.form, os.environ["MONGO_URL"]))
     now_jst = datetime.fromisoformat(request.form["now"])
     logging.warning(now_jst)
-    client = _get_mongo_client()
-    coll = client["timers"]["timers"]
+
+    _, coll = _get_mongo_client()
     tasks_df = pd.DataFrame(coll.find({"$and": [
         {"datetime": {"$lte": now_jst}},
         {"status": {"$ne": "DONE"}},
@@ -56,12 +59,39 @@ def heartbeat():
 
         # mark as done
         coll.update_one({"uuid": r["uuid"]}, {"$set": {"status": "DONE"}})
+
+    _, coll = _get_mongo_client("habits")
+    _, coll_anchors = _get_mongo_client("habit_anchors")
+    habits_df = pd.DataFrame(coll.find())
+    habit_anchors_df = pd.DataFrame(coll_anchors.find())
+    habit_anchors = {}
+    if len(habit_anchors_df) > 0:
+        habit_anchors = {k: v for k, v in zip(
+            habit_anchors_df.uuid, habit_anchors_df.datetime)}
+    for habit in habits_df.to_dict(orient="records"):
+        start_date = habit_anchors.get(habit["uuid"], habit["start_date"])
+        base = start_date+timedelta(seconds=1)
+        it = croniter(habit["cronline"], base)
+        is_punched = False
+        url = habit["url"]
+        payload = habit["payload"]
+        method = habit["method"]
+        while (ds := it.get_next(datetime)) <= now_jst:
+            is_punched = True
+            getattr(requests, method.lower())(url, data=payload)
+        if is_punched:
+            coll_anchors.update_one(
+                {"uuid": habit["uuid"]},
+                {"$set": {"datetime": now_jst}},
+                upsert=True,
+            )
+
     return "Success"
 
 
 @app.route('/register_single_call', methods=["POST"])
 def register_single_call():
-    client = _get_mongo_client()
+    _, coll = _get_mongo_client()
     form = request.form
     _uuid = str(uuid.uuid4())
     payload = form.get("payload")
@@ -69,10 +99,10 @@ def register_single_call():
         payload = "{}"
     logging.warning(f"payload: \"{payload}\"")
     # FIXME: subsample datetime to align with heartbeat freq
-    client["timers"]["timers"].insert_one({
+    coll.insert_one({
         "datetime": datetime.fromisoformat(form["datetime"]),
         "url": form["url"],
-        "method": form.get("method", "GET"),
+        "method": form["method"],
         "payload": json.loads(payload),
         "uuid": _uuid,
     })
@@ -81,5 +111,20 @@ def register_single_call():
 
 @app.route('/register_regular_call', methods=["POST"])
 def register_regular_call():
-    # TODO
-    return ""
+    form = request.form
+    cronline = form["cronline"]
+    start_date = datetime.fromisoformat(form["start_date"])
+    _, coll = _get_mongo_client("habits")
+    _uuid = str(uuid.uuid4())
+    payload = form.get("payload")
+    if payload is None:
+        payload = "{}"
+    coll.insert_one({
+        "uuid": _uuid,
+        "url": form["url"],
+        "start_date": start_date,
+        "method": form["method"],
+        "payload": json.loads(payload),
+        "cronline": cronline,
+    })
+    return _uuid

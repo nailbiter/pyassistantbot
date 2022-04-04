@@ -35,6 +35,7 @@ def parse_time(time, now=None):
         time_chunks = [time[i:i+2] for i in range(0, len(time), 2)]
         time_chunks = reversed(time_chunks)
         for tc, flag in zip(time_chunks, "minute hour day month year".split(" ")):
+            dt = now
             dt = dt.replace(
                 **{flag: (2000 if flag == "year" else 0)+int(tc)})
 #          dt += timedelta(hours=_common.get_current_offset() -

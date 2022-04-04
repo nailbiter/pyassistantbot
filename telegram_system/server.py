@@ -29,6 +29,32 @@ import _common
 app = Flask(__name__)
 
 
+@app.route('/new_habit', methods=["POST"])
+def new_habit():
+    #    logging.warning((request.form, os.environ["MONGO_URL"]))
+    message = json.loads(request.form["message"])
+    chat_id = message["chat"]["id"]
+    text = message["text"]
+    _, c1, c2, c3, c4, c5, media, msg = re.split(r"\s+", text, maxsplit=8)
+    url = f"http://{os.environ['SCHEDULER']}/register_regular_call"
+    _url = f"http://{os.environ['SELF_URL']}/send_message"
+    payload = {
+        "text": msg,
+        "chat_id": chat_id,
+    }
+    kwargs = {
+        "cronline": " ".join([c1, c2, c3, c4, c5]),
+        "start_date": datetime.now().isoformat(),
+    }
+    requests.post(url, data={
+        "url": _url,
+        "method": "POST",
+        "payload": json.dumps(payload),
+        **kwargs,
+    })
+    return 'Hello, World!'
+
+
 @app.route('/new_timer', methods=["POST"])
 def new_timer():
     logging.warning((request.form, os.environ["MONGO_URL"]))
