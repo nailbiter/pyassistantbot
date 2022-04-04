@@ -33,8 +33,9 @@ from datetime import datetime
 
 
 @click.command()
-def script_show_tasks():
-    df = _get_current_tasks()
+@click.option("-d", "--database-file", type=click.Path)
+def script_show_tasks(database_file):
+    df = _get_current_tasks(database_file=database_file)
     df["value"] = df["value"].apply(shlex.split).apply(
         lambda l: l[-2]).apply(json.loads).apply(lambda o: o["text"])
     df = df[["value", "due_date"]]
