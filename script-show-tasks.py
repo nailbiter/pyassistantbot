@@ -33,7 +33,7 @@ from datetime import datetime
 
 
 @click.command()
-@click.option("-d", "--database-file", type=click.Path)
+@click.option("-d", "--database-file", type=click.Path())
 def script_show_tasks(database_file):
     df = _get_current_tasks(database_file=database_file)
     df["value"] = df["value"].apply(shlex.split).apply(
