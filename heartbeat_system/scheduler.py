@@ -54,6 +54,7 @@ def list_timers():
         tasks_df["text"] = tasks_df.payload.apply(lambda o: o["text"])
         tasks_df = tasks_df.drop(columns=["payload", "url", "method", "_id"])
         tasks_df.datetime = tasks_df.datetime.apply(lambda dt: dt.isoformat())
+        tasks_df = tasks_df.sort_values(by="datetime")
     return tasks_df.to_json()
 
 
