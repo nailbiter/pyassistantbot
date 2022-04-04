@@ -37,7 +37,7 @@ def new_habit():
     message = json.loads(request.form["message"])
     chat_id = message["chat"]["id"]
     text = message["text"]
-    _, c1, c2, c3, c4, c5, media, msg = re.split(r"\s+", text, 8)
+    _, c1, c2, c3, c4, c5, media, msg = re.split(r"\s+", text, maxsplit=7)
     url = f"http://{os.environ['SCHEDULER']}/register_regular_call"
     _url = f"http://{os.environ['SELF_URL']}/send_message"
     payload = {
@@ -85,7 +85,10 @@ def new_timer():
     message = json.loads(request.form["message"])
     chat_id = message["chat"]["id"]
     text = message["text"]
-    _, time, media, msg = re.split(r"\s+", text, 4)
+    logging.warning(f"\"{text}\"")
+    spl = re.split(r"\s+", text, maxsplit=3)
+    logging.warning(spl)
+    _, time, media, msg = spl
     url = f"http://{os.environ['SCHEDULER']}/register_single_call"
     _url = f"http://{os.environ['SELF_URL']}/send_message"
     payload = {"text": msg, "chat_id": chat_id}
