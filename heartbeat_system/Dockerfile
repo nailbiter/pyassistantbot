@@ -11,5 +11,6 @@ RUN pip3 install -r requirements.txt
 
 COPY heartbeat.py .
 COPY scheduler.py .
+COPY _common.py .
 
 CMD ["false"]

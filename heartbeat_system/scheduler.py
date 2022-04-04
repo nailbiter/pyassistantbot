@@ -27,14 +27,34 @@ import json
 import pandas as pd
 import requests
 from croniter import croniter
+import _common
 
 app = Flask(__name__)
 
 
-def _get_mongo_client(coll_name="timers"):
-    client = pymongo.MongoClient(os.environ["MONGO_URL"])
-    coll = client["timers"][coll_name]
-    return client, coll
+@app.route("/list_habits")
+def list_habits():
+    _, coll = _common.get_mongo_client("habits")
+    _, coll_anchors = _common.get_mongo_client("habit_anchors")
+    habits_df = pd.DataFrame(coll.find())
+    if len(habits_df) > 0:
+        habits_df["text"] = habits_df.payload.apply(lambda o: o["text"])
+        habits_df = habits_df.drop(
+            columns=["payload", "url", "method", "_id", "start_date"])
+#        habits_df.datetime = habits_df.datetime.apply(
+#            lambda dt: dt.isoformat())
+    return habits_df.to_json()
+
+
+@app.route("/list_timers")
+def list_timers():
+    _, coll = _common.get_mongo_client()
+    tasks_df = _common.get_timers(coll, is_lte=False)
+    if len(tasks_df) > 0:
+        tasks_df["text"] = tasks_df.payload.apply(lambda o: o["text"])
+        tasks_df = tasks_df.drop(columns=["payload", "url", "method", "_id"])
+        tasks_df.datetime = tasks_df.datetime.apply(lambda dt: dt.isoformat())
+    return tasks_df.to_json()
 
 
 @app.route('/heartbeat', methods=["POST"])
@@ -43,11 +63,8 @@ def heartbeat():
     now_jst = datetime.fromisoformat(request.form["now"])
     logging.warning(now_jst)
 
-    _, coll = _get_mongo_client()
-    tasks_df = pd.DataFrame(coll.find({"$and": [
-        {"datetime": {"$lte": now_jst}},
-        {"status": {"$ne": "DONE"}},
-    ]}))
+    _, coll = _common.get_mongo_client()
+    tasks_df = _common.get_timers(coll, now_jst=now_jst)
     logging.error(tasks_df.to_string())
     for r in tasks_df.to_dict(orient="records"):
         # make a call
@@ -60,8 +77,8 @@ def heartbeat():
         # mark as done
         coll.update_one({"uuid": r["uuid"]}, {"$set": {"status": "DONE"}})
 
-    _, coll = _get_mongo_client("habits")
-    _, coll_anchors = _get_mongo_client("habit_anchors")
+    _, coll = _common.get_mongo_client("habits")
+    _, coll_anchors = _common.get_mongo_client("habit_anchors")
     habits_df = pd.DataFrame(coll.find())
     habit_anchors_df = pd.DataFrame(coll_anchors.find())
     habit_anchors = {}
@@ -91,7 +108,7 @@ def heartbeat():
 
 @app.route('/register_single_call', methods=["POST"])
 def register_single_call():
-    _, coll = _get_mongo_client()
+    _, coll = _common.get_mongo_client()
     form = request.form
     _uuid = str(uuid.uuid4())
     payload = form.get("payload")
@@ -114,7 +131,7 @@ def register_regular_call():
     form = request.form
     cronline = form["cronline"]
     start_date = datetime.fromisoformat(form["start_date"])
-    _, coll = _get_mongo_client("habits")
+    _, coll = _common.get_mongo_client("habits")
     _uuid = str(uuid.uuid4())
     payload = form.get("payload")
     if payload is None:

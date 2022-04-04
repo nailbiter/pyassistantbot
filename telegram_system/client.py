@@ -71,9 +71,14 @@ def help_command(update: Update, context: CallbackContext) -> None:
 
 def process_command(update, context, command=None):
     assert command is not None
-#    update.message.reply_text(update.message.text)
+    chat_id = update.message.chat_id
+    if update.message.chat_id != int(os.environ["CHAT_ID"]):
+        logging.warning(
+            f"chat_id={chat_id}!={os.environ['CHAT_ID']} ==> ignore")
+        return
     url = f"http://{os.environ['SCHEDULER']}/{command}"
     logging.error(update.message.to_dict())
+    update.message.chat_id
     message_str = json.dumps(update.message.to_dict())
     logging.warning(message_str)
     requests.post(url, data={"message": message_str})
@@ -91,7 +96,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", help_command))
 
-    for k in ["new_timer", "new_habit"]:
+    for k in ["new_timer", "new_habit", "list_timers", "list_habits"]:
         dispatcher.add_handler(CommandHandler(
             k, functools.partial(process_command, command=k)))
 

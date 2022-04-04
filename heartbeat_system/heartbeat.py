@@ -26,7 +26,16 @@ from os import path
 import logging
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+import math
+
+
+def _wait_for_start_of_new_min():
+    now = datetime.now()
+    now_ = datetime.fromtimestamp(math.ceil(now.timestamp()/60)*60)
+    logging.warning(f"going to sleep for {str(now_-now)}")
+    time.sleep((now_-now).total_seconds())
+    logging.warning(datetime.now().isoformat())
 
 
 @click.command()
@@ -34,7 +43,10 @@ from datetime import datetime
 @click.option("--remote-hostname", default="scheduler")
 @click.option("--remote-port", type=int, default=5000)
 @click.option("--remote-path", default="heartbeat")
-def heartbeat(beat_duration_min, remote_hostname, remote_port, remote_path):
+@click.option("--wait-for-start-of-new-min/--no-wait-for-start-of-new-min", default=True)
+def heartbeat(beat_duration_min, remote_hostname, remote_port, remote_path, wait_for_start_of_new_min):
+    if wait_for_start_of_new_min:
+        _wait_for_start_of_new_min()
     while True:
         now = datetime.now()
         now = datetime.fromtimestamp(
