@@ -64,7 +64,7 @@ def list_timers():
     r = requests.get(f"http://{os.environ['SCHEDULER']}/list_timers")
     df = pd.read_json(io.StringIO(r.text))
     _common.send_message(
-        chat_id, f"```{df.to_string()}```", parse_mode="Markdown")
+        chat_id, df.to_string(), enclose_in_triple_ticks=True, parse_mode="Markdown")
     return 'Success'
 
 

@@ -94,12 +94,37 @@ def _simple_math_eval(s, number_utils=(float, float)):
     return ans
 
 
-def send_message(chat_id, text, telegram_token=None, **kwargs):
+def send_message(chat_id, text, telegram_token=None, enclose_in_triple_ticks=False, **kwargs):
     if telegram_token is None:
         telegram_token = os.environ["TELEGRAM_TOKEN"]
     bot = Bot(telegram_token)
-    mess = bot.sendMessage(
-        chat_id=chat_id,
-        text=text,
-        **kwargs
-    )
+
+    for text_ in _split_long_text(text, _TELEGRAM_MESSAGE_LEN_LIM):
+        if enclose_in_triple_ticks:
+            text_ = f"```{text_}```"
+        mess = bot.sendMessage(
+            chat_id=chat_id,
+            text=text_,
+            **kwargs
+        )
+
+
+# https://dev-qa.com/320717/sending-large-messages-telegram-bot
+#_TELEGRAM_MESSAGE_LEN_LIM = 4096
+_TELEGRAM_MESSAGE_LEN_LIM = 4000
+
+
+def _split_long_text(text, max_len, line_sep="\n"):
+    res = []
+    accum, buf = 0, []
+    for line in text.split(line_sep):
+        assert len(line) <= max_len, f"len(\"{line}\")={len(line)}>{max_len}"
+        if accum+len(line) > max_len:
+            res.append(line_sep.join(buf))
+            accum, buf = len(line), [line]
+        else:
+            accum += (len(line)+len(line_sep))
+            buf.append(line)
+    if len(buf) > 0:
+        res.append(line_sep.join(buf))
+    return res
