@@ -98,7 +98,7 @@ def new_timer():
         ), "url": _url, "method": "POST", "payload": json.dumps(payload)})
         _common.send_message(
             chat_id, f"set message `{msg}` to be sent at `{dt.strftime('%Y-%m-%d %H:%M (%a)')}`", parse_mode="Markdown")
-    except Exception as a:
+    except Exception as e:
         _common.send_message(
             chat_id, f"exception: ```{e}```", parse_mode="Markdown")
         raise
