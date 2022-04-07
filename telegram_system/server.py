@@ -81,10 +81,9 @@ def list_habits():
 
 @app.route('/new_timer', methods=["POST"])
 def new_timer():
-    #    logging.warning((request.form, os.environ["MONGO_URL"]))
+    message = json.loads(request.form["message"])
     chat_id = message["chat"]["id"]
     try:
-        message = json.loads(request.form["message"])
         text = message["text"]
         logging.warning(f"\"{text}\"")
         spl = re.split(r"\s+", text, maxsplit=3)
