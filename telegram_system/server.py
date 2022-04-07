@@ -81,22 +81,28 @@ def list_habits():
 
 @app.route('/new_timer', methods=["POST"])
 def new_timer():
-    logging.warning((request.form, os.environ["MONGO_URL"]))
-    message = json.loads(request.form["message"])
+    #    logging.warning((request.form, os.environ["MONGO_URL"]))
     chat_id = message["chat"]["id"]
-    text = message["text"]
-    logging.warning(f"\"{text}\"")
-    spl = re.split(r"\s+", text, maxsplit=3)
-    logging.warning(spl)
-    _, time, media, msg = spl
-    url = f"http://{os.environ['SCHEDULER']}/register_single_call"
-    _url = f"http://{os.environ['SELF_URL']}/send_message"
-    payload = {"text": msg, "chat_id": chat_id}
-    dt = _common.parse_time(time)
-    requests.post(url, data={"datetime": dt.isoformat(
-    ), "url": _url, "method": "POST", "payload": json.dumps(payload)})
-    _common.send_message(
-        chat_id, f"set message `{msg}` to be sent at `{dt.strftime('%Y-%m-%d %H:%M (%a)')}`", parse_mode="Markdown")
+    try:
+        message = json.loads(request.form["message"])
+        text = message["text"]
+        logging.warning(f"\"{text}\"")
+        spl = re.split(r"\s+", text, maxsplit=3)
+        logging.warning(spl)
+        _, time, media, msg = spl
+        url = f"http://{os.environ['SCHEDULER']}/register_single_call"
+        _url = f"http://{os.environ['SELF_URL']}/send_message"
+        payload = {"text": msg, "chat_id": chat_id}
+        dt = _common.parse_time(time)
+        assert dt > datetime.now()
+        requests.post(url, data={"datetime": dt.isoformat(
+        ), "url": _url, "method": "POST", "payload": json.dumps(payload)})
+        _common.send_message(
+            chat_id, f"set message `{msg}` to be sent at `{dt.strftime('%Y-%m-%d %H:%M (%a)')}`", parse_mode="Markdown")
+    except Exception as a:
+        _common.send_message(
+            chat_id, f"exception: ```{e}```", parse_mode="Markdown")
+        raise
     return 'Hello, World!'
 
 
