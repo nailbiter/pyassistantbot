@@ -93,7 +93,7 @@ def new_timer():
         _url = f"http://{os.environ['SELF_URL']}/send_message"
         payload = {"text": msg, "chat_id": chat_id}
         dt = _common.parse_time(time)
-        assert dt > datetime.now()
+        assert dt > datetime.now(), f"{dt}<={datetime.now()}"
         requests.post(url, data={"datetime": dt.isoformat(
         ), "url": _url, "method": "POST", "payload": json.dumps(payload)})
         _common.send_message(
