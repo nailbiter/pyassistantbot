@@ -100,7 +100,7 @@ def new_timer():
             chat_id, f"set message `{msg}` to be sent at `{dt.strftime('%Y-%m-%d %H:%M (%a)')}`", parse_mode="Markdown")
     except Exception as e:
         _common.send_message(
-            chat_id, f"exception: ```{e}```", parse_mode="Markdown")
+            chat_id, f"exception: ``` {e}```", parse_mode="Markdown")
         raise
     return 'Hello, World!'
 
