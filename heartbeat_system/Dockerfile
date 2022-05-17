@@ -13,4 +13,6 @@ COPY heartbeat.py .
 COPY scheduler.py .
 COPY _common.py .
 
-CMD ["false"]
+ENV FLASK_APP="scheduler.py"
+
+CMD ["flask", "run", "--host=0.0.0.0"]
