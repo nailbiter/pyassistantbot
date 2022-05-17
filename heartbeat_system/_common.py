@@ -25,7 +25,7 @@ import pandas as pd
 
 def get_mongo_client(coll_name="timers"):
     client = pymongo.MongoClient(os.environ["MONGO_URL"])
-    coll = client["timers"][coll_name]
+    coll = client[os.environ.get("TIMERS_COLL", "timers")][coll_name]
     return client, coll
 
 
