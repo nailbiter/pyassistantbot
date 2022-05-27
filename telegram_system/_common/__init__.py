@@ -31,14 +31,15 @@ def parse_time(time, now=None):
     if time.startswith("+"):
         time = time[1:]
         keyword = "minutes"
-        for kw in "hours,days".split(","):
-            if time.endswith(kw[0]):
+        for _kw in "hours,days".split(","):
+            if time.endswith(_kw[0]):
                 time = time[:-1]
-                keyword = kw
+                keyword = _kw
                 break
+        logging.warning(f"keyword=\"{keyword}\"")
 
         td = timedelta(
-            **{kw: _simple_math_eval(time, number_utils=(int, int))})
+            **{keyword: _simple_math_eval(time, number_utils=(int, int))})
         dt = now + td
 
     else:
