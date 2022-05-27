@@ -29,9 +29,18 @@ def parse_time(time, now=None):
     if now is None:
         now = datetime.now()
     if time.startswith("+"):
-        dt = now + \
-            timedelta(minutes=_simple_math_eval(
-                time[1:], number_utils=(int, int)))
+        time = time[1:]
+        keyword = "minutes"
+        for kw in "hours,days".split(","):
+            if time.endswith(kw[0]):
+                time = time[:-1]
+                keyword = kw
+                break
+
+        td = timedelta(
+            **{kw: _simple_math_eval(time, number_utils=(int, int))})
+        dt = now + td
+
     else:
         time_chunks = [time[i:i+2] for i in range(0, len(time), 2)]
         time_chunks = reversed(time_chunks)
